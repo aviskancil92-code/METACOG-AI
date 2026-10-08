@@ -1,0 +1,365 @@
+# ============================================
+# METACOG-AI CONFIGURATION
+# Version: 1.0.0
+# ============================================
+
+# --------------------------------------------
+# SYSTEM INFO
+# --------------------------------------------
+system:
+  name: "METACOG-AI"
+  version: "1.0.0"
+  environment: "production"  # development | staging | production
+  log_level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+
+# --------------------------------------------
+# MODEL CONFIGURATION
+# --------------------------------------------
+model:
+  provider: "openai"  # openai | anthropic | google | local
+  name: "gpt-4"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout_seconds: 30
+  
+  # Fallback model jika primary gagal
+  fallback:
+    provider: "openai"
+    name: "gpt-3.5-turbo"
+    enabled: true
+
+# --------------------------------------------
+# MODULE CONFIGURATION
+# --------------------------------------------
+modules:
+  planning:
+    enabled: true
+    min_mode: "STANDARD"  # FAST | STANDARD | DEEP
+    require_decomposition: true
+    min_subtasks: 2
+    require_assumptions: false
+  
+  monitoring:
+    enabled: true
+    min_mode: "STANDARD"
+    tagging_enabled: true
+    tags:
+      - CERTAIN
+      - LIKELY
+      - UNCERTAIN
+      - GUESS
+      - DISPUTED
+      - OUTDATED
+    contradiction_detection: true
+    grounding_check: true
+    overconfidence_reduction: true
+  
+  evaluation:
+    enabled: true
+    min_mode: "STANDARD"
+    consistency_check: true
+    factual_audit: true
+    sycophancy_scan: true
+    devils_advocate: true
+    bias_check: true
+    revision_threshold: 0.6  # Skor min untuk auto-revisi
+  
+  adaptive_control:
+    enabled: true
+    max_iterations: 3
+    quality_threshold: 85  # Skor 0-100
+    escalation_triggers:
+      - health_mental
+      - health_physical
+      - financial_large  # >10 juta IDR
+      - legal
+      - emotional_intensity
+      - physical_danger
+      - minor_involved
+
+# --------------------------------------------
+# MODE THRESHOLDS
+# --------------------------------------------
+mode_thresholds:
+  fast_max_score: 30      # 0-30 → FAST
+  standard_max_score: 70  # 31-70 → STANDARD
+  # 71-100 → DEEP
+
+mode_weights:
+  complexity: 0.30
+  controversy: 0.25
+  impact: 0.25
+  specificity: 0.20
+
+# --------------------------------------------
+# UNCERTAINTY ESTIMATION
+# --------------------------------------------
+uncertainty_factors:
+  complexity:
+    weights:
+      multi_domain: 0.4
+      abstract: 0.3
+      nested_logic: 0.3
+  controversy:
+    weights:
+      experts_disagree: 0.5
+      public_debate: 0.3
+      historical_dispute: 0.2
+  impact:
+    weights:
+      personal_decision: 0.4
+      financial: 0.3
+      health: 0.3
+  specificity:
+    weights:
+      niche_domain: 0.5
+      recent_developments: 0.3
+      limited_data: 0.2
+
+# --------------------------------------------
+# SAFETY
+# --------------------------------------------
+safety:
+  harm_filter: true
+  prompt_injection_detection: true
+  output_sanitization: true
+  pii_detection: true
+  
+  # Auto-reject patterns
+  reject_patterns:
+    - "cara meretas"
+    - "cara membobol"
+    - "bahan peledak"
+    - "senjata ilegal"
+  
+  # Escalation replies
+  escalation_reply: |
+    Topik ini sensitif dan membutuhkan perhatian khusus.
+    Saya akan memberikan informasi seimbang + rekomendasi 
+    untuk konsultasi dengan ahli terkait.
+
+# --------------------------------------------
+# TAGGING
+# --------------------------------------------
+tagging:
+  show_to_user: false  # Sembunyikan tag di output final
+  show_in_debug: true
+  calibrate_confidence: true
+  forbidden_words:
+    - "pasti"
+    - "selalu"
+    - "tidak mungkin"
+    - "semua orang tahu"
+
+# --------------------------------------------
+# SYCOPHANCY PREVENTION
+# --------------------------------------------
+sycophancy:
+  detection_enabled: true
+  patterns:
+    - "user_requests_validation"
+    - "user_emotional_pressure"
+    - "user_repeats_claim"
+    - "user_authority_appeal"
+  response_strategy: "empathy_then_facts"
+  max_agreement_without_evidence: 0.3
+
+# --------------------------------------------
+# LOOPING
+# --------------------------------------------
+looping:
+  enabled_for_modes: ["DEEP"]
+  max_iterations: 3
+  quality_threshold: 85
+  improvement_threshold: 5  # Harus naik min 5 poin per iterasi
+  timeout_seconds: 60
+
+# --------------------------------------------
+# LOGGING
+# --------------------------------------------
+logging:
+  level: "INFO"
+  format: "json"  # json | text
+  destinations:
+    - type: "file"
+      path: "/var/log/metacog/app.log"
+      rotation: "daily"
+      retention_days: 30
+    - type: "stdout"
+      enabled: true
+  
+  fields:
+    - timestamp
+    - query_hash  # SHA256, bukan raw query (privacy)
+    - mode_selected
+    - iterations
+    - response_time_ms
+    - token_usage
+    - sycophancy_events
+    - escalation_triggered
+    - user_id  # anonymized
+
+# --------------------------------------------
+# METRICS
+# --------------------------------------------
+metrics:
+  enabled: true
+  provider: "prometheus"
+  endpoint: "/metrics"
+  port: 9090
+  
+  tracked:
+    - request_count
+    - response_time
+    - mode_distribution
+    - iteration_count
+    - sycophancy_resisted
+    - escalation_count
+    - token_usage
+    - error_rate
+
+# --------------------------------------------
+# CACHING
+# --------------------------------------------
+caching:
+  enabled: true
+  backend: "redis"
+  ttl_seconds: 3600
+  max_size_mb: 512
+  hash_query: true  # Cache berdasarkan hash query
+  
+  cacheable_modes:
+    - FAST
+    - STANDARD
+  # DEEP tidak di-cache karena personalisasi
+
+# --------------------------------------------
+# RATE LIMITING
+# --------------------------------------------
+rate_limiting:
+  enabled: true
+  backend: "redis"
+  
+  tiers:
+    free:
+      requests_per_minute: 10
+      requests_per_day: 100
+    pro:
+      requests_per_minute: 60
+      requests_per_day: 5000
+    enterprise:
+      requests_per_minute: 300
+      requests_per_day: 100000
+
+# --------------------------------------------
+# API
+# --------------------------------------------
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors:
+    enabled: true
+    allowed_origins:
+      - "https://yourdomain.com"
+    allowed_methods: ["GET", "POST"]
+  
+  endpoints:
+    health: "/health"
+    ready: "/ready"
+    metrics: "/metrics"
+    process: "/v1/process"
+    batch: "/v1/batch"
+  
+  auth:
+    enabled: true
+    type: "bearer"  # bearer | api_key | oauth
+
+# --------------------------------------------
+# ESCALATION
+# --------------------------------------------
+escalation:
+  enabled: true
+  
+  triggers:
+    health_mental:
+      keywords: ["depresi", "bunuh diri", "self-harm", "cemas berat"]
+      action: "recommend_professional"
+      disclaimer: true
+    
+    health_physical:
+      keywords: ["sakit", "gejala", "diagnosis", "obat"]
+      action: "recommend_doctor"
+      disclaimer: true
+    
+    financial_large:
+      threshold_idr: 10000000
+      action: "add_risk_disclaimer"
+    
+    legal:
+      keywords: ["hukum", "gugatan", "pidana", "perjanjian"]
+      action: "recommend_lawyer"
+    
+    emotional_intensity:
+      detection: "sentiment_analysis"
+      threshold: 0.8
+      action: "empathetic_response"
+
+# --------------------------------------------
+# A/B TESTING
+# --------------------------------------------
+ab_testing:
+  enabled: false
+  variants:
+    - name: "control"
+      metacog_enabled: false
+      weight: 0.5
+    - name: "treatment"
+      metacog_enabled: true
+      weight: 0.5
+  
+  metrics_to_compare:
+    - user_satisfaction
+    - factual_accuracy
+    - response_time
+
+# --------------------------------------------
+# COMPLIANCE
+# --------------------------------------------
+compliance:
+  gdpr: true
+  ccpa: true
+  data_retention_days: 90
+  anonymize_logs: true
+  right_to_deletion: true
+  
+  disclaimer_text: |
+    Sistem ini menggunakan AI. Meskipun kami berupaya memberikan
+    informasi akurat, selalu verifikasi untuk keputusan penting.
+    Untuk topik medis, hukum, atau finansial, konsultasikan
+    dengan profesional.
+
+# --------------------------------------------
+# NOTIFICATION
+# --------------------------------------------
+notifications:
+  alerts:
+    - type: "error_rate"
+      threshold: 0.05
+      channels: ["slack", "email"]
+    
+    - type: "response_time"
+      threshold_seconds: 10
+      channels: ["slack"]
+    
+    - type: "sycophancy_spike"
+      threshold: 0.2
+      channels: ["email"]
+
+# --------------------------------------------
+# NOTES
+# --------------------------------------------
+# - Ubah environment ke "production" untuk deployment live
+# - Aktifkan A/B testing untuk validasi efektivitas
+# - Review safety patterns setiap kuartal
+# - Sesuaikan mode_thresholds berdasarkan data historis
+```
